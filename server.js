@@ -73,7 +73,6 @@ var Application = function() {
         Date(Date.now()), self.ipaddress, self.port);
     });
   };
-
 };
 
 //Creates a new Application Object, initializes and starts it.
