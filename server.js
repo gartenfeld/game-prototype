@@ -3,38 +3,30 @@ var morgan = require('morgan');
 
 var Application = function() {
 
-    var self = this;
+  var self = this;
 
-    self.setupVariables = function() {
-        self.ipaddress = process.env.OPENSHIFT_NODEJS_IP;
-        self.port      = process.env.OPENSHIFT_NODEJS_PORT || 8080;
+  self.setup = function() {
+    self.ip     = process.env.OPENSHIFT_NODEJS_IP;
+    self.port   = process.env.OPENSHIFT_NODEJS_PORT || 8080;
+    if (self.ip === undefined) {
+      console.warn('Env var OPENSHIFT_NODEJS_IP not found, using 0.0.0.0');
+      self.ip = '0.0.0.0';
+    }
+  };
 
-        if (typeof self.ipaddress === "undefined") {
-            console.warn('No OPENSHIFT_NODEJS_IP var, using 0.0.0.0');
-            self.ipaddress = "0.0.0.0";
-        };
-    };
+  self.initialize = function() {
+    self.setup();
+    self.app = express();
+    self.app.use(morgan('combined'));
+    self.app.use(express.static('public')); 
+  };
 
-
-    self.initializeServer = function() {
-        self.app = express();
-        self.app.use(morgan('combined'));
-        self.app.use(express.static('public'));
-        
-    };
-
-
-    self.initialize = function() {
-        self.setupVariables();
-        self.initializeServer();
-    };
-
-    self.start = function() {
-        self.app.listen(self.port, self.ipaddress, function() {
-            console.log('%s: Node server started on %s:%d ...',
-                        Date(Date.now() ), self.ipaddress, self.port);
-        });
-    };
+  self.start = function() {
+    self.app.listen(self.port, self.ip, function() {
+      console.log('%s: Node server started on %s:%d ...',
+        Date(Date.now()), self.ip, self.port);
+    });
+  };
 
 };  
 
