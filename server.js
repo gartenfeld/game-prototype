@@ -1,6 +1,6 @@
 var express = require('express');
 var morgan = require('morgan');
-
+var Communication = require('./Communication');
 /*
   Application
   Description:
@@ -42,7 +42,6 @@ var Application = function() {
     self.app = express();
     self.app.use(morgan('combined'));
     self.app.use(express.static('public'));
-
   };
 
   /*
@@ -60,17 +59,37 @@ var Application = function() {
   };
 
   /*
-    .start
+    .start 
     params: (n/a)
     returns: (n/a)
     description:
       This function will start the server.
+      NOTE: Use .startWithSocketCommunication instead
     author: Rene Loperena
   */
   self.start = function() {
     self.app.listen(self.port, self.ipaddress, function() {
       console.log('%s: Node server started on %s:%d ...',
         Date(Date.now()), self.ipaddress, self.port);
+    });
+  };
+
+  /*
+    .startWithSocketCommunication
+    params: (n/a)
+    returns: (n/a)
+    description:
+      This function will create a new Communication Object and start the server,
+      it is used over .start.
+    author: Rene Loperena
+  */
+  self.startWithSocketCommunication = function() {
+    var server = require('http').Server(self.app);
+    self.communication = new Communication(server);
+    server.listen(self.port, self.ipaddress, function() {
+      console.log('%s: Node server started on %s:%d ...',
+        Date(Date.now()), self.ipaddress, self.port);
+      self.communication.startCommunication();
     });
   };
 };

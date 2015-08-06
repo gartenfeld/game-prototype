@@ -72,9 +72,11 @@ module.exports = (function() {
   */
   Room.prototype.sendAllClientsInformation = function() {
     var self = this;
-    self.display.sendDisplayInformation(_.map(self.clients, function(client){
-      return client.getClientInformation();
-    }));
+    if(self.display !== undefined){
+      self.display.sendDisplayInformation(_.map(self.clients, function(client){
+        return client.getClientInformation();
+      }));
+    }
   };
 
 
