@@ -9,8 +9,8 @@ module.exports = (function(){
     author: Rene Loperena
   */
   function Communication(server){
-    this.io = require('socket.io')(server);
-    this.room = Room(this.io);
+    var io = require('socket.io')(server);
+    this.room = new Room(io);
   }
   
   /*
@@ -22,10 +22,11 @@ module.exports = (function(){
     author: Rene Loperena
   */
   Communication.prototype.startCommunication = function(intervalTime) {
+    var self = this;
     var interval = intervalTime || 50;
-    setInterval(interval,function(){
-      this.room.sendAllClientsInformation();
-    });
+    setInterval(function(){
+      self.room.sendAllClientsInformation();
+    },interval);
   };
 
 

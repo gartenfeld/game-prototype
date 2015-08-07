@@ -12,8 +12,8 @@ var Application = function() {
 
   /*
     .setupVariables
-    params: (n/a)
-    returns: (n/a)
+    params: (nothing)
+    returns: (nothing)
     description:
       This function will create the ipaddress and port for the application,
       it will use the environment variables wich are configured for OpenShift
@@ -32,8 +32,8 @@ var Application = function() {
 
   /*
     .initializeServer
-    params: (n/a)
-    returns: (n/a)
+    params: (nothing)
+    returns: (nothing)
     description:
       This will create the express app and add all the middleware and routes.
     author: Rene Loperena
@@ -46,8 +46,8 @@ var Application = function() {
 
   /*
     .initialize
-    params: (n/a)
-    returns: (n/a)
+    params: (nothing)
+    returns: (nothing)
     description:
       This function will call the setupVariables() function and initializeServer() functions
       in order to get everything set up.
@@ -60,8 +60,8 @@ var Application = function() {
 
   /*
     .start 
-    params: (n/a)
-    returns: (n/a)
+    params: (nothing)
+    returns: (nothing)
     description:
       This function will start the server.
       NOTE: Use .startWithSocketCommunication instead
@@ -76,8 +76,8 @@ var Application = function() {
 
   /*
     .startWithSocketCommunication
-    params: (n/a)
-    returns: (n/a)
+    params: (nothing)
+    returns: (nothing)
     description:
       This function will create a new Communication Object and start the server,
       it is used over .start.
@@ -97,4 +97,4 @@ var Application = function() {
 //Creates a new Application Object, initializes and starts it.
 var app = new Application();
 app.initialize();
-app.start();
+app.startWithSocketCommunication();

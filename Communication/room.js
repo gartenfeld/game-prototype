@@ -14,6 +14,7 @@ module.exports = (function() {
     this.io = io;
     this.display = null;
     this.clients = [];
+    this.negotiateConnection();
   }
 
   /*
@@ -30,23 +31,85 @@ module.exports = (function() {
     var self = this;
     /*
       On a connection event it will ask the new socket for an identity, if it is a client
-      will create a new Client object and push it to the Clients array, else it will set it
-      as the display object.
+      will call '.addToClientList', else it will set it as the display with '.setDisplay'.
     */
     self.io.on('connection', function(socket) {
+      console.log('Received a socket connection');
       socket.on('identity', function(identity) {
         if (identity === 'client') {
-          /*
-            Creates the new Client with it's corresponding socket and a uniqueId, then
-            it pushes it into the array.
-          */
-          self.clients.push(new Client(socket, self.generateGUID()));
+          self.addClientToList(socket);
         } else if (identity === 'display') {
-          self.display = new Display(socket);
+          self.setDisplay(socket);
         }
       });
       socket.emit('identity', 'What are you?');
     });
+  };
+
+  /*
+    .addClientToList
+    params: socket
+    returns: (nothing)
+    description:
+      Creates a new Client given a socket, assigns it the 'disconnect' handler calling the
+      'clientDisconnectHandler' function and pushes it into the clients array.
+    author: Rene Loperena
+  */
+  Room.prototype.addClientToList = function(socket){
+    var client = new Client(socket, this.generateGUID());
+    this.clientDisconnectHandler(client);
+    this.clients.push(client);
+  };
+
+  /*
+    .clientDisconnectHandler
+    params: client
+    returns: (nothing)
+    description:
+      Creates a disconnect handler for the 'disconnect' event in order to remove the client
+      from the list once it disconnects.
+    author: Rene Loperena
+  */
+  Room.prototype.clientDisconnectHandler = function(client){
+    var self = this;
+    client.socket.on('disconnect', function() {
+      var index = self.clients.indexOf(client);
+      if (index > -1) {
+        self.clients.splice(index, 1);
+      }
+   });
+  };
+
+  /*
+    .setDisplay
+    params: socket
+    returns: (nothing)
+    description:
+      Creates a new Display given an object, sets the 'disconnect' handler calling the
+      'displayDisconnectHandler' function and sets this as the display for the room.
+    author: Rene Loperena
+  */
+  Room.prototype.setDisplay = function(socket){
+    var display = new Display(socket);
+    this.displayDisconnectHandler(display);
+    this.display = display;
+  };
+
+  /*
+    .displayDisconnectHandler
+    params: display
+    returns: (nothing)
+    description:
+      Creates a disconnect handler for the 'disconnect' event, sets the room's display to
+      null.
+    author: Rene Loperena
+  */
+  Room.prototype.displayDisconnectHandler = function(display) {
+    var self = this;
+    display.socket.on('disconnect', function() {
+      console.log('Display got disconnect!');
+      self.display = null;
+   });
   };
 
   /*
@@ -72,13 +135,11 @@ module.exports = (function() {
   */
   Room.prototype.sendAllClientsInformation = function() {
     var self = this;
-    if(self.display !== undefined){
+    if(self.display !== null){
       self.display.sendDisplayInformation(_.map(self.clients, function(client){
         return client.getClientInformation();
       }));
     }
   };
-
-
   return Room;
 })();
