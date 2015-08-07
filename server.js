@@ -1,77 +1,100 @@
 var express = require('express');
 var morgan = require('morgan');
-
+var Communication = require('./Communication');
 /*
   Application
   Description:
     This object will contain the express application.
-  Author: Rene Loperena
+  author: Rene Loperena
 */
-
 var Application = function() {
-
   var self = this;
 
   /*
-    .setup
-    Params: (n/a)
-    Returns: (n/a)
-    Description:
-      This function will retrieve the host address and port of the production 
-      server from the environment variables configured for OpenShift, if these 
-      aren't available, the settings will default to 0.0.0.0:8080. 
-    Author: Rene Loperena
-    Changes: David Rosson
+    .setupVariables
+    params: (nothing)
+    returns: (nothing)
+    description:
+      This function will create the ipaddress and port for the application,
+      it will use the environment variables wich are configured for OpenShift
+      deployment if available, else it will default them to 0.0.0.0:8080.
+    author: Rene Loperena
   */
+  self.setupVariables = function() {
+    self.ipaddress = process.env.OPENSHIFT_NODEJS_IP;
+    self.port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
 
-  self.setup = function() {
-    self.ip     = process.env.OPENSHIFT_NODEJS_IP;
-    self.port   = process.env.OPENSHIFT_NODEJS_PORT || 8080;
-    if (self.ip === undefined) {
-      console.warn('Env var OPENSHIFT_NODEJS_IP not found, using 0.0.0.0');
-      self.ip = '0.0.0.0';
+    if (typeof self.ipaddress === 'undefined') {
+      console.warn('No OPENSHIFT_NODEJS_IP var, using 0.0.0.0');
+      self.ipaddress = '0.0.0.0';
     }
   };
 
   /*
-    .initialize
-    Params: (n/a)
-    Returns: (n/a)
-    Description:
-      This function will call the setup() function, create an express app, and 
-      load the middleware for logging and static file serving.
-    Author: Rene Loperena
-    Changes: David Rosson
+    .initializeServer
+    params: (nothing)
+    returns: (nothing)
+    description:
+      This will create the express app and add all the middleware and routes.
+    author: Rene Loperena
   */
-
-  self.initialize = function() {
-    self.setup();
+  self.initializeServer = function() {
     self.app = express();
     self.app.use(morgan('combined'));
-    self.app.use(express.static('public')); 
+    self.app.use(express.static('public'));
   };
 
   /*
-    .start
-    Params: (n/a)
-    Returns: (n/a)
-    Description:
-      This function will start the server.
-    Author: Rene Loperena
+    .initialize
+    params: (nothing)
+    returns: (nothing)
+    description:
+      This function will call the setupVariables() function and initializeServer() functions
+      in order to get everything set up.
+    author: Rene Loperena
   */
+  self.initialize = function() {
+    self.setupVariables();
+    self.initializeServer();
+  };
 
+  /*
+    .start 
+    params: (nothing)
+    returns: (nothing)
+    description:
+      This function will start the server.
+      NOTE: Use .startWithSocketCommunication instead
+    author: Rene Loperena
+  */
   self.start = function() {
-    self.app.listen(self.port, self.ip, function() {
+    self.app.listen(self.port, self.ipaddress, function() {
       console.log('%s: Node server started on %s:%d ...',
-        Date(Date.now()), self.ip, self.port);
+        Date(Date.now()), self.ipaddress, self.port);
     });
   };
 
-};  
+  /*
+    .startWithSocketCommunication
+    params: (nothing)
+    returns: (nothing)
+    description:
+      This function will create a new Communication Object and start the server,
+      it is used over .start.
+    author: Rene Loperena
+  */
+  self.startWithSocketCommunication = function() {
+    var server = require('http').Server(self.app);
+    self.communication = new Communication(server);
+    server.listen(self.port, self.ipaddress, function() {
+      console.log('%s: Node server started on %s:%d ...',
+        Date(Date.now()), self.ipaddress, self.port);
+      self.communication.startCommunication();
+    });
+  };
+};
 
-
-// Creates a new Application object.
+//Creates a new Application Object, initializes and starts it.
 var app = new Application();
-// Initializes the app, and starts the server.
 app.initialize();
-app.start();
+app.startWithSocketCommunication();
