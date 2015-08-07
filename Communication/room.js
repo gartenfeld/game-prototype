@@ -53,12 +53,14 @@ module.exports = (function() {
     description:
       Creates a new Client given a socket, assigns it the 'disconnect' handler calling the
       'clientDisconnectHandler' function and pushes it into the clients array.
-    author: Rene Loperena
+    author: Rene Loperena 
+    modified: Alex Leonetti
   */
   Room.prototype.addClientToList = function(socket){
     var client = new Client(socket, this.generateGUID());
     this.clientDisconnectHandler(client);
     this.clients.push(client);
+    this.notifyDisplayClientConnection(client.uniqueId);
   };
 
   /*
@@ -75,6 +77,7 @@ module.exports = (function() {
     var self = this;
     var id = client.uniqueId;
     client.socket.on('disconnect', function() {
+      console.log('disconnecting --->', id);
       self.notifyDisplayClientDisconnection(id);
       var index = self.clients.indexOf(client);
       if (index > -1) {
@@ -154,8 +157,26 @@ module.exports = (function() {
     author: Brian Chu
   */
   Room.prototype.notifyDisplayClientDisconnection = function(clientId){
-    this.display.socket.emit('playerDisconnect', {playerId: clientId});
+    if(this.display !== null) {
+      this.display.socket.emit('playerDisconnect', clientId);
+    }
   };
+
+
+
+  /*
+    .notifyDisplayClientConnection
+    params: n/a
+    returns: n/a
+    description:
+      This function emits a "playerConnect" event to the display
+    author: Alex Leonetti
+  */
+  Room.prototype.notifyDisplayClientConnection = function(clientId) {
+    if(this.display !== null) {
+      this.display.socket.emit('playerConnect', clientId);
+    }
+  }
 
 
   return Room;
