@@ -69,10 +69,13 @@ module.exports = (function() {
       Creates a disconnect handler for the 'disconnect' event in order to remove the client
       from the list once it disconnects.
     author: Rene Loperena
+    modified: Brian Chu
   */
   Room.prototype.clientDisconnectHandler = function(client){
     var self = this;
+    var id = client.uniqueId;
     client.socket.on('disconnect', function() {
+      self.notifyDisplayClientDisconnection(id);
       var index = self.clients.indexOf(client);
       if (index > -1) {
         self.clients.splice(index, 1);
@@ -141,5 +144,19 @@ module.exports = (function() {
       }));
     }
   };
+
+  /*
+    .notifyDisplayClientDisconnection
+    params: clientId
+    returns: (nothing)
+    description:
+      This function emits a "playerDisconnect" event to the display that tells it that this ID has disconnected.
+    author: Brian Chu
+  */
+  Room.prototype.notifyDisplayClientDisconnection = function(clientId){
+    this.display.socket.emit('playerDisconnect', {playerId: clientId});
+  };
+
+
   return Room;
 })();
