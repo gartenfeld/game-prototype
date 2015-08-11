@@ -176,8 +176,8 @@ module.exports = (function() {
     if(this.display !== null) {
       this.display.socket.emit('playerConnect', clientId);
     }
-  }
+  };
 
 
   return Room;
-})();
+}());
